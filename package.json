@@ -1,0 +1,13 @@
+{
+  "name": "badge-role-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord qui ajoute automatiquement un badge (emoji) au pseudo quand un rôle est reçu",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5"
+  }
+}
