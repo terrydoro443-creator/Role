@@ -340,15 +340,33 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply({ content: 'Trop de rôles auto-attribuables (max 25).', ephemeral: true });
       }
 
-      if (!interaction.guild) {
-        return interaction.reply({
-          content: "⚠️ Impossible de récupérer les informations du serveur, réessaie dans un instant.",
-          ephemeral: true,
-        });
+      // On essaie d'abord le cache (rapide), et si le serveur n'y est pas
+      // encore (ex: juste après un redémarrage du bot), on va le chercher
+      // directement via l'API Discord plutôt que d'abandonner.
+      let guild = interaction.guild;
+      if (!guild) {
+        try {
+          guild = await interaction.client.guilds.fetch(interaction.guildId);
+        } catch (err) {
+          console.error('❌ Impossible de récupérer le serveur via fetch:', err);
+          return interaction.reply({
+            content: "⚠️ Impossible de récupérer les informations du serveur, réessaie dans un instant.",
+            ephemeral: true,
+          });
+        }
+      }
+      // On s'assure aussi que les rôles du serveur sont bien en cache,
+      // sinon .cache.get(roleId) ci-dessous renverrait toujours "inconnu".
+      if (!guild.roles.cache.size) {
+        try {
+          await guild.roles.fetch();
+        } catch (err) {
+          console.error('❌ Impossible de récupérer les rôles du serveur:', err);
+        }
       }
 
       const options = selfAssignable.map(([roleId, cfg]) => {
-        const role = interaction.guild.roles.cache.get(roleId);
+        const role = guild.roles.cache.get(roleId);
         return {
           label: role ? role.name : 'Rôle inconnu (supprimé ?)',
           value: roleId,
